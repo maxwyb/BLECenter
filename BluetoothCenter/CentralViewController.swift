@@ -9,7 +9,7 @@
 import UIKit
 import CoreBluetooth
 
-class ViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDelegate {
+class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDelegate {
 
   var myCentralManager: CBCentralManager?
   var discoveredPeripherals: NSArray = []
@@ -60,6 +60,7 @@ class ViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDe
     peripheral.delegate = self
   }
   
+  // MARK: CBPeripheralDelegate
   func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
     for service in peripheral.services! {
       print("didDiscoverService: \(service)")
