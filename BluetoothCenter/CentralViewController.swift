@@ -96,12 +96,13 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
   }
   
   func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+
     if let data = characteristic.value {
       let dataString = String(data: data, encoding: String.Encoding.utf8) as String!
-      print("Characteristic data: \(dataString)")
+      print("Characteristic data for \(characteristic): \(dataString)")
     }
     
-    print("Characteristic data: data is nil.")
+    print("Characteristic data for \(characteristic): data is nil.")
 
   }
 }

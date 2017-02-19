@@ -44,8 +44,11 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
                                                     properties: CBCharacteristicProperties.read, value: myValueData! as Data,
                                                     permissions: CBAttributePermissions.readable)
     myService = CBMutableService.init(type: myServiceUUID, primary: true)
-    myService!.characteristics?.append(myCharacteristic!)
-    
+    if var characteristics = myService?.characteristics {  // TODO: tricky optional unwraping
+      characteristics.append(myCharacteristic!)
+    } else {
+      myService?.characteristics = [myCharacteristic!]
+    }
     
     myPeripheralManager!.add(myService!)
     
