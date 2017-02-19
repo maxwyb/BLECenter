@@ -97,6 +97,14 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
     }
   }
   
+  func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
+
+    // TODO: potentially more than 1 requests
+    myCharacteristic!.value = requests.first!.value
+    
+    print("didReceiveWrite requests: \(myCharacteristic?.value)")
+  }
+  
   func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
     print("\(central) didSubscribeTo: \(characteristic)")
     
