@@ -9,14 +9,25 @@
 import UIKit
 import CoreBluetooth
 
+let iPadUUID = UUID.init(uuidString: "216FA5C2-67CE-081D-B90B-D30CCD6C9A3A")!
+let iPhoneUUID = UUID.init(uuidString: "0DC8E108-9FDB-AA51-2DBB-965B61450888")!
+
 class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDelegate {
 
   var myCentralManager: CBCentralManager?
   var discoveredPeripherals = [CBPeripheral]()
   var connectedPeripheral: CBPeripheral?
   
-  let iPadUUID = UUID.init(uuidString: "216FA5C2-67CE-081D-B90B-D30CCD6C9A3A")!
-  let iPhoneUUID = UUID.init(uuidString: "0DC8E108-9FDB-AA51-2DBB-965B61450888")!
+  @IBOutlet weak var messageLabel: UILabel?
+  @IBOutlet weak var textField: UITextField?
+  
+  @IBAction func sendButtonClicked() {
+    let updatedValue = textField!.text!  // TODO: cannot be empty
+    let updatedValueData = updatedValue.data(using: String.Encoding.utf8)
+    
+    connectedPeripheral!.writeValue(updatedValueData!, for: PeripheralViewController().myCharacteristic!, type: CBCharacteristicWriteType.withResponse)
+    
+  }
   
   @IBAction func stopScanButtonClicked() {
     myCentralManager!.stopScan()
@@ -41,7 +52,6 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
         
         connectedPeripheral = discovered
         myCentralManager!.connect(connectedPeripheral!, options: nil)
-        
       }
     }
   }
@@ -91,19 +101,40 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
     for characteristic in service.characteristics! {
       print("didDiscoverCharacteristicsFor \(service): \(characteristic)")
       
-      peripheral.readValue(for: characteristic)
+      if (characteristic.uuid == myCharacteristicUUID) {
+        peripheral.setNotifyValue(true, for: characteristic)
+        
+        peripheral.readValue(for: characteristic)
+      }
     }
   }
   
+  // the following is called when "readValue" or a notified characteristic is updated
   func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
 
     if let data = characteristic.value {
       let dataString = String(data: data, encoding: String.Encoding.utf8) as String!
       print("Characteristic data for \(characteristic): \(dataString)")
+      
+      if characteristic.uuid == myCharacteristicUUID {
+        // TODO: update text field
+      }
     }
     
     print("Characteristic data for \(characteristic): data is nil.")
 
+  }
+  
+  func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+    if (error != nil) {
+      print(error)
+    }
+  }
+  
+  func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
+    if (error != nil) {
+      print(error)
+    }
   }
 }
 
