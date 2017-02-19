@@ -12,11 +12,15 @@ import CoreBluetooth
 class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDelegate {
 
   var myCentralManager: CBCentralManager?
-  var discoveredPeripherals: NSArray = []
+  var discoveredPeripherals = [CBPeripheral]()
   var connectedPeripheral: CBPeripheral?
   
+  let iPadUUID = UUID.init(uuidString: "216FA5C2-67CE-081D-B90B-D30CCD6C9A3A")!
+  
   @IBAction func stopScanButtonClicked() {
-      myCentralManager!.stopScan()
+    myCentralManager!.stopScan()
+    
+    connectToPeripheral(withUUID: iPadUUID)
   }
   
   override func viewDidLoad() {
@@ -29,13 +33,17 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
     super.didReceiveMemoryWarning()
   }
 
-  func connectToPeripheral() {
-    connectedPeripheral = discoveredPeripherals[0] as! CBPeripheral
-    
-    myCentralManager!.connect(connectedPeripheral!, options: nil)
-    
-    connectedPeripheral!.discoverServices(nil)
-    
+  func connectToPeripheral(withUUID deviceID: UUID) {
+    for discovered in discoveredPeripherals {
+      if (discovered.identifier == deviceID) {
+        print("Connecting to peripheral: \(iPadUUID)")
+        
+        connectedPeripheral = discovered
+        myCentralManager!.connect(connectedPeripheral!, options: nil)
+        
+        connectedPeripheral!.discoverServices(nil)
+      }
+    }
   }
   
   // MARK: CBCentralManagerDelegate
@@ -49,9 +57,18 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
   }
 
   func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-    print("didDiscover: \(peripheral), \(RSSI)" )
     
-    self.discoveredPeripherals.adding(peripheral)
+    var duplicatePeripheral = false
+    for discovered in discoveredPeripherals {
+      //let discoveredCast = discovered as! CBPeripheral  // TODO: awkward!
+      if (discovered.identifier == peripheral.identifier) {
+        duplicatePeripheral = true
+      }
+    }
+    if (!duplicatePeripheral) {
+      print("didDiscover: \(peripheral), \(RSSI)" )
+      self.discoveredPeripherals.append(peripheral)
+    }
   }
   
   func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {

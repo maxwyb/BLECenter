@@ -24,19 +24,6 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
 
     myPeripheralManager = CBPeripheralManager.init(delegate: self, queue: nil, options: nil)
     
-    let myValue = "Hello Bluetooth LE!"
-    // TODO: add write permission
-    let myValueData = myValue.data(using: String.Encoding.utf8)
-    myCharacteristic = CBMutableCharacteristic.init(type: myCharacteristicUUID,
-                                                        properties: CBCharacteristicProperties.read, value: myValueData! as Data,
-                                                        permissions: CBAttributePermissions.readable)
-    myService = CBMutableService.init(type: myServiceUUID, primary: true)
-    myService!.characteristics?.append(myCharacteristic!)
-    
-    myPeripheralManager!.add(myService!)
-    
-    myPeripheralManager!.startAdvertising([CBAdvertisementDataServiceUUIDsKey : [myService!.uuid]])
-    print("startAdvertising.")
   }
 
   override func didReceiveMemoryWarning() {
@@ -49,6 +36,20 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
       print(peripheral.state)
       return
     }
+    
+    let myValue = "Hello Bluetooth LE!"
+    let myValueData = myValue.data(using: String.Encoding.utf8)
+    // TODO: add write permission
+    myCharacteristic = CBMutableCharacteristic.init(type: myCharacteristicUUID,
+                                                    properties: CBCharacteristicProperties.read, value: myValueData! as Data,
+                                                    permissions: CBAttributePermissions.readable)
+    myService = CBMutableService.init(type: myServiceUUID, primary: true)
+    myService!.characteristics?.append(myCharacteristic!)
+    
+    myPeripheralManager!.add(myService!)
+    
+    myPeripheralManager!.startAdvertising([CBAdvertisementDataServiceUUIDsKey : [myService!.uuid]])
+    print("startAdvertising.")
   }
   
   func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
