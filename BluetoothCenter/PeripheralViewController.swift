@@ -46,6 +46,7 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
     myService = CBMutableService.init(type: myServiceUUID, primary: true)
     myService!.characteristics?.append(myCharacteristic!)
     
+    
     myPeripheralManager!.add(myService!)
     
     myPeripheralManager!.startAdvertising([CBAdvertisementDataServiceUUIDsKey : [myService!.uuid]])

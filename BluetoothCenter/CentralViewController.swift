@@ -16,11 +16,12 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
   var connectedPeripheral: CBPeripheral?
   
   let iPadUUID = UUID.init(uuidString: "216FA5C2-67CE-081D-B90B-D30CCD6C9A3A")!
+  let iPhoneUUID = UUID.init(uuidString: "0DC8E108-9FDB-AA51-2DBB-965B61450888")!
   
   @IBAction func stopScanButtonClicked() {
     myCentralManager!.stopScan()
     
-    connectToPeripheral(withUUID: iPadUUID)
+    connectToPeripheral(withUUID: iPhoneUUID)
   }
   
   override func viewDidLoad() {
@@ -36,12 +37,11 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
   func connectToPeripheral(withUUID deviceID: UUID) {
     for discovered in discoveredPeripherals {
       if (discovered.identifier == deviceID) {
-        print("Connecting to peripheral: \(iPadUUID)")
+        print("Connecting to peripheral: \(deviceID)")
         
         connectedPeripheral = discovered
         myCentralManager!.connect(connectedPeripheral!, options: nil)
         
-        connectedPeripheral!.discoverServices(nil)
       }
     }
   }
@@ -75,6 +75,7 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
     print("didConnect: \(peripheral)")
     
     peripheral.delegate = self
+    peripheral.discoverServices(nil)
   }
   
   // MARK: CBPeripheralDelegate
@@ -95,9 +96,13 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
   }
   
   func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-    let data = characteristic.value
+    if let data = characteristic.value {
+      let dataString = String(data: data, encoding: String.Encoding.utf8) as String!
+      print("Characteristic data: \(dataString)")
+    }
     
-    print("Characteristic data: \(data)")
+    print("Characteristic data: data is nil.")
+
   }
 }
 
