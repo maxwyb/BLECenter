@@ -52,9 +52,14 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
     let myValueData = myValue.data(using: String.Encoding.utf8)
     // Syntax: bitwise OR equals square bracket
     myCharacteristic = CBMutableCharacteristic.init(type: myCharacteristicUUID,
-                                                    properties: [CBCharacteristicProperties.read, CBCharacteristicProperties.write, CBCharacteristicProperties.notify],
+                                                    properties: [CBCharacteristicProperties.read,
+//                                                                 CBCharacteristicProperties.writ e,
+//                                                                 CBCharacteristicProperties.notify],
+                                                      ],
                                                     value: myValueData! as Data,
-                                                    permissions: [CBAttributePermissions.readable, CBAttributePermissions.writeable])
+                                                    //value: nil,
+                                                    permissions: [CBAttributePermissions.readable])
+      //CBAttributePermissions.writeable])
     myService = CBMutableService.init(type: myServiceUUID, primary: true)
     
     if var characteristics = myService?.characteristics {  // tricky optional unwraping
