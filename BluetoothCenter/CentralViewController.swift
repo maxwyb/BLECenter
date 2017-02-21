@@ -18,6 +18,8 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
   var discoveredPeripherals = [CBPeripheral]()
   var connectedPeripheral: CBPeripheral?
   
+  var messageCharacteristic: CBCharacteristic?
+  
   @IBOutlet weak var messageLabel: UILabel?
   @IBOutlet weak var textField: UITextField?
   
@@ -25,8 +27,7 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
     let updatedValue = textField!.text!  // TODO: cannot be empty
     let updatedValueData = updatedValue.data(using: String.Encoding.utf8)
     
-    connectedPeripheral!.writeValue(updatedValueData!, for: PeripheralViewController().myCharacteristic!, type: CBCharacteristicWriteType.withResponse)
-    
+    connectedPeripheral!.writeValue(updatedValueData!, for: messageCharacteristic!, type: CBCharacteristicWriteType.withResponse)
   }
   
   @IBAction func stopScanButtonClicked() {
@@ -52,6 +53,7 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
         
         connectedPeripheral = discovered
         myCentralManager!.connect(connectedPeripheral!, options: nil)
+        return
       }
     }
   }
@@ -70,7 +72,7 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
     
     var duplicatePeripheral = false
     for discovered in discoveredPeripherals {
-      //let discoveredCast = discovered as! CBPeripheral  // TODO: awkward!
+      //let discoveredCast = discovered as! CBPeripheral  // awkward type casting!
       if (discovered.identifier == peripheral.identifier) {
         duplicatePeripheral = true
       }
@@ -103,6 +105,7 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
       
       if (characteristic.uuid == myCharacteristicUUID) {
         peripheral.setNotifyValue(true, for: characteristic)
+        messageCharacteristic = characteristic
         
         peripheral.readValue(for: characteristic)
       }
@@ -113,11 +116,13 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
   func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
 
     if let data = characteristic.value {
-      let dataString = String(data: data, encoding: String.Encoding.utf8) as String!
+      //let dataString = String(data: data, encoding: String.Encoding.utf8) as! String
+      let dataString = String(data: data, encoding: String.Encoding.utf8)!
       print("Characteristic data for \(characteristic): \(dataString)")
       
       if characteristic.uuid == myCharacteristicUUID {
-        // TODO: update text field
+        // update text field
+        messageLabel!.text = dataString
       }
     }
     
@@ -127,13 +132,13 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
   
   func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
     if (error != nil) {
-      print(error)
+      print(error!)
     }
   }
   
   func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
     if (error != nil) {
-      print(error)
+      print(error!)
     }
   }
 }

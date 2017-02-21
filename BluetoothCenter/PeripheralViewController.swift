@@ -20,6 +20,9 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
   
   var subscribedCharacteristic: CBCharacteristic?
   
+  //let myValue = "Hello Bluetooth LE!"
+  let myValue = "The quick brown fox jumps over the lazy dog. Can the value of a characteristic has size larger than 20 bytes?"
+  
   @IBOutlet weak var messageLabel: UILabel?
   @IBOutlet weak var textField: UITextField?
   
@@ -27,7 +30,8 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
     let updatedValue = textField!.text!  // TODO: cannot be empty
     let updatedValueData = updatedValue.data(using: String.Encoding.utf8)
     
-    var didSendValue = myPeripheralManager?.updateValue(updatedValueData!, for: myCharacteristic!, onSubscribedCentrals: nil)
+    let didSendValue = myPeripheralManager?.updateValue(updatedValueData!, for: myCharacteristic!, onSubscribedCentrals: nil)
+    print("didSendValue: \(didSendValue)")
   }
   
   override func viewDidLoad() {
@@ -48,24 +52,51 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
       return
     }
     
-    let myValue = "Hello Bluetooth LE!"
-    let myValueData = myValue.data(using: String.Encoding.utf8)
     // Syntax: bitwise OR equals square bracket
+    
+    // TODO: read and notify permissions cannot be added to myCharacteristic
+    /*
     myCharacteristic = CBMutableCharacteristic.init(type: myCharacteristicUUID,
                                                     properties: [CBCharacteristicProperties.read,
-//                                                                 CBCharacteristicProperties.writ e,
-//                                                                 CBCharacteristicProperties.notify],
-                                                      ],
+                                                                 CBCharacteristicProperties.write,
+                                                                 CBCharacteristicProperties.notify],
                                                     value: myValueData! as Data,
-                                                    //value: nil,
+                                                    permissions: [CBAttributePermissions.readable,
+                                                                  CBAttributePermissions.writeable])
+    */
+    // OK. if myCharacteristic is set to be read-only, it is cached so didReceiveReadRequest would never be called.
+    /*
+    myCharacteristic = CBMutableCharacteristic.init(type: myCharacteristicUUID,
+                                                    properties: [CBCharacteristicProperties.read],
+                                                    value: myValueData! as Data,
                                                     permissions: [CBAttributePermissions.readable])
-      //CBAttributePermissions.writeable])
+    */
+    
+    // Run-time exception. Don't initialize characteristic value if it includes permissions other than readbale. Respond the value in didReceiveReadRequest instead
+    /*
+    myCharacteristic = CBMutableCharacteristic.init(type: myCharacteristicUUID,
+                                                    properties: [CBCharacteristicProperties.read,
+                                                                 CBCharacteristicProperties.write,
+                                                                 CBCharacteristicProperties.notify],
+                                                    value: nil,
+                                                    permissions: [CBAttributePermissions.readable,
+                                                                  CBAttributePermissions.writeable])
+    myCharacteristic!.value = myValueData! as Data
+    */
+    
+    myCharacteristic = CBMutableCharacteristic.init(type: myCharacteristicUUID,
+                                                    properties: [CBCharacteristicProperties.read,
+                                                                 CBCharacteristicProperties.write,
+                                                                 CBCharacteristicProperties.notify],
+                                                    value: nil,
+                                                    permissions: [CBAttributePermissions.readable,
+                                                                  CBAttributePermissions.writeable])
     myService = CBMutableService.init(type: myServiceUUID, primary: true)
     
     if var characteristics = myService?.characteristics {  // tricky optional unwraping
       characteristics.append(myCharacteristic!)
     } else {
-      myService?.characteristics = [myCharacteristic!]
+      myService!.characteristics = [myCharacteristic!]
     }
     myPeripheralManager!.add(myService!)
     
@@ -75,19 +106,23 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
   
   func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
     if (error != nil) {
-      print(error)
+      print(error!)
     }
   }
   
   func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
     if (error != nil) {
-      print(error)
+      print(error!)
     }
   }
   
   func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest) {
     print("didReceiveRead: \(request)")
+    
+    let myValueData = myValue.data(using: String.Encoding.utf8)
+    
     if (request.characteristic.uuid == myCharacteristic!.uuid) {
+      /*
       // TODO: not sure "count" method call is correct
       if (request.offset > myCharacteristic!.value!.count) {
         myPeripheralManager?.respond(to: request, withResult: CBATTError.invalidOffset)
@@ -95,8 +130,14 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
       }
       
       let dataRange = Range(uncheckedBounds: (request.offset + 1, myCharacteristic!.value!.count))
+      /* this code is used when the characteristic is read-only. This method is not called anyway
       request.value = myCharacteristic!.value?.subdata(in: dataRange)
+      */
+      request.value = myValueData!.subdata(in: dataRange)
+      */
       
+      // EXPERIMENT: transfer data in one response even if it may be large'
+      request.value = myValueData!
       myPeripheralManager?.respond(to: request, withResult: CBATTError.success)
       print("respond: \(request)")
     }
@@ -104,10 +145,13 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
   
   func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
 
-    // TODO: potentially more than 1 requests
+    // potentially more than 1 request; only respond the first request
     myCharacteristic!.value = requests.first!.value
     
-    print("didReceiveWrite requests: \(myCharacteristic?.value)")
+    print("didReceiveWrite requests: \(myCharacteristic!.value)")
+    // update text label
+    let myNewValue = String(data: myCharacteristic!.value!, encoding: String.Encoding.utf8)!
+    messageLabel!.text = myNewValue
   }
   
   func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
