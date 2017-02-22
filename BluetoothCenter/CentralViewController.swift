@@ -33,7 +33,8 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
   @IBAction func stopScanButtonClicked() {
     myCentralManager!.stopScan()
     
-    connectToPeripheral(withUUID: iPhoneUUID)
+    //connectToPeripheral(withUUID: iPhoneUUID)
+    connectToPeripheral()
   }
   
   override func viewDidLoad() {
@@ -46,8 +47,19 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
     super.didReceiveMemoryWarning()
   }
 
-  func connectToPeripheral(withUUID deviceID: UUID) {
+  func connectToPeripheral() {
     for discovered in discoveredPeripherals {
+      /* this does not work because we haven't run discoverServices yet
+       if (discovered.services!.first!.uuid == myServiceUUID) {
+         print("Connecting to peripheral: \(deviceID)")
+       
+         connectedPeripheral = discovered
+         myCentralManager!.connect(connectedPeripheral!, options: nil)
+         return
+       }
+       */
+
+      /*
       if (discovered.identifier == deviceID) {
         print("Connecting to peripheral: \(deviceID)")
         
@@ -55,6 +67,14 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
         myCentralManager!.connect(connectedPeripheral!, options: nil)
         return
       }
+      */
+      
+      // now we use service UUID to find the desired device to connect, not device UUID
+      print("Connecting to peripheral: \(discovered.identifier)")
+      
+      connectedPeripheral = discovered
+      myCentralManager!.connect(connectedPeripheral!, options: nil)
+      return
     }
   }
   
@@ -65,7 +85,8 @@ class CentralViewController: UIViewController, CBCentralManagerDelegate, CBPerip
       return
     }
     
-    myCentralManager!.scanForPeripherals(withServices: nil, options: nil)
+    //myCentralManager!.scanForPeripherals(withServices: nil, options: nil)
+    myCentralManager!.scanForPeripherals(withServices: [myServiceUUID], options: nil)
   }
 
   func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {

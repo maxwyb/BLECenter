@@ -34,6 +34,10 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
     print("didSendValue: \(didSendValue)")
   }
   
+  @IBAction func stopAdvertisingButtonClicked() {
+    myPeripheralManager!.stopAdvertising()
+  }
+  
   override func viewDidLoad() {
     super.viewDidLoad()
 
@@ -101,6 +105,7 @@ class PeripheralViewController: UIViewController, CBPeripheralManagerDelegate {
     myPeripheralManager!.add(myService!)
     
     myPeripheralManager!.startAdvertising([CBAdvertisementDataServiceUUIDsKey : [myService!.uuid]])
+    
     print("startAdvertising.")
   }
   
