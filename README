@@ -1,0 +1,4 @@
+## Bluetooth Center
+An iOS app built in Swift 3 to test Bluetooth LE's basic peripheral and central features.
+
+Check out my post on [Introduction to CoreBluetooth](https://maxwyb.github.io/ios/2017/02/21/ble-ios.html)
